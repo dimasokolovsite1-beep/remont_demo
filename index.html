@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Калькулятор вартості ремонту</title>
+<meta name="description" content="Розрахуйте орієнтовну вартість ремонту квартири за 4 питання. Точний розрахунок + безкоштовна консультація з дизайн-макетом у подарунок.">
+<meta property="og:title" content="Калькулятор вартості ремонту квартири">
+<meta property="og:description" content="4 питання — і ви знаєте орієнтовний бюджет ремонту. У подарунок — консультація та дизайн-макет кімнати.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ТОКЕНИ
+   ============================================================ */
+:root{
+  --bg:#0A0B0D;
+  --bg-2:#101216;
+  --bg-3:#15181d;
+
+  --gold-1:#C9A86A;
+  --gold-2:#E8D5A8;
+  --gold-3:#9C7F45;
+  --gold-soft:rgba(201,168,106,.14);
+  --gold-line:rgba(201,168,106,.34);
+
+  --text:#F3F0EA;
+  --muted:rgba(243,240,234,.56);
+  --faint:rgba(243,240,234,.34);
+
+  --surface:rgba(255,255,255,.035);
+  --surface-2:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.09);
+  --line-2:rgba(255,255,255,.14);
+
+  --ok:#7FD1A6;
+  --err:#E8846F;
+
+  --r-sm:10px;
+  --r-md:16px;
+  --r-lg:22px;
+  --r-xl:30px;
+
+  --ease:cubic-bezier(.22,.7,.26,1);
+  --spring:cubic-bezier(.34,1.46,.42,1);
+
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --sans:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+html,body{margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-weight:400;
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ============================================================
+   АТМОСФЕРА: дрейфуючі градієнтні блоби + зерно
+   ============================================================ */
+.atmo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+.blob.b1{width:60vw;height:60vw;min-width:420px;min-height:420px;left:-18vw;top:-22vw;
+  background:radial-gradient(circle at 50% 50%,rgba(201,168,106,.30),transparent 68%);
+  animation:drift1 34s var(--ease) infinite alternate}
+.blob.b2{width:52vw;height:52vw;min-width:360px;min-height:360px;right:-16vw;top:28vh;
+  background:radial-gradient(circle at 50% 50%,rgba(122,98,168,.22),transparent 68%);
+  animation:drift2 42s var(--ease) infinite alternate}
+.blob.b3{width:46vw;height:46vw;min-width:320px;min-height:320px;left:22vw;bottom:-26vw;
+  background:radial-gradient(circle at 50% 50%,rgba(201,168,106,.17),transparent 70%);
+  animation:drift3 38s var(--ease) infinite alternate}
+@keyframes drift1{to{transform:translate3d(9vw,7vh,0) scale(1.14)}}
+@keyframes drift2{to{transform:translate3d(-11vw,-9vh,0) scale(1.1)}}
+@keyframes drift3{to{transform:translate3d(7vw,-8vh,0) scale(1.18)}}
+
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.045;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:140px 140px}
+
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 120% 85% at 50% 0%,transparent 42%,rgba(0,0,0,.55) 100%)}
+
+/* ============================================================
+   КАРКАС
+   ============================================================ */
+.shell{position:relative;z-index:2;max-width:1020px;margin:0 auto;padding:clamp(18px,3.4vw,40px) clamp(16px,4vw,32px) 56px}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(20px,3.6vw,38px)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--gold-2),var(--gold-1) 45%,var(--gold-3));
+  box-shadow:0 6px 22px rgba(201,168,106,.3),inset 0 1px 0 rgba(255,255,255,.5)}
+.brand-mark svg{width:21px;height:21px;display:block}
+.brand-txt{min-width:0}
+.brand-name{font-family:var(--sans);font-weight:700;font-size:14px;letter-spacing:.16em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{font-size:11.5px;color:var(--faint);letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.top-phone{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);
+  font-size:14px;font-weight:600;letter-spacing:.02em;white-space:nowrap;
+  padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  transition:border-color .3s var(--ease),background .3s var(--ease),transform .3s var(--ease)}
+.top-phone:hover{border-color:var(--gold-line);background:var(--gold-soft);transform:translateY(-1px)}
+.top-phone svg{width:14px;height:14px;opacity:.8}
+
+/* ============================================================
+   ПОВЗУНОК ПОДАРУНКІВ
+   ============================================================ */
+.gifts{position:relative;border:1px solid var(--line);border-radius:var(--r-lg);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.018));
+  padding:clamp(16px,2.6vw,24px) clamp(14px,2.6vw,26px) clamp(18px,2.6vw,24px);
+  margin-bottom:clamp(18px,3vw,30px);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 18px 50px -24px rgba(0,0,0,.8)}
+
+.gifts-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}
+.gifts-title{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.gifts-pct{font-family:var(--serif);font-size:19px;font-weight:600;
+  background:linear-gradient(100deg,var(--gold-2),var(--gold-1));-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
+
+/* смуга */
+.bar{position:relative;height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:20px}
+.bar-fill{position:absolute;inset:0 auto 0 0;width:0%;border-radius:999px;
+  background:linear-gradient(90deg,var(--gold-3),var(--gold-1) 48%,var(--gold-2));
+  box-shadow:0 0 16px rgba(201,168,106,.6);
+  transition:width .85s var(--spring)}
+.bar-fill::after{content:"";position:absolute;inset:0;border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
+  transform:translateX(-100%);animation:sheen 2.6s var(--ease) infinite}
+@keyframes sheen{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+/* трек подарунків */
+/* minmax(0,1fr) — інакше довге слово («Дизайн-макет») розпирає колонку
+   і остання картка вилазить за межі панелі на вузьких екранах. */
+.gift-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+.gift{position:relative;text-align:left;padding:12px 12px 13px;border-radius:var(--r-md);
+  border:1px solid var(--line);background:rgba(255,255,255,.022);
+  display:flex;flex-direction:column;align-items:flex-start;
+  min-width:0;overflow-wrap:anywhere;
+  transition:all .55s var(--ease);opacity:.42}
+.gift-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;margin-bottom:9px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);transition:all .55s var(--ease)}
+.gift-ico svg{width:15px;height:15px;opacity:.5;transition:opacity .55s var(--ease)}
+.gift-label{font-size:12.5px;font-weight:600;line-height:1.35;letter-spacing:.005em}
+.gift-note{font-size:11px;color:var(--faint);margin-top:3px;line-height:1.35}
+
+.gift.on{opacity:1;border-color:var(--gold-line);background:linear-gradient(165deg,rgba(201,168,106,.14),rgba(201,168,106,.03));
+  box-shadow:0 10px 30px -14px rgba(201,168,106,.5)}
+.gift.on .gift-ico{background:linear-gradient(145deg,var(--gold-2),var(--gold-1) 50%,var(--gold-3));border-color:transparent;
+  box-shadow:0 4px 14px rgba(201,168,106,.42)}
+.gift.on .gift-ico svg{opacity:1}
+.gift.on .gift-ico svg path,.gift.on .gift-ico svg circle,.gift.on .gift-ico svg rect{stroke:#15110a}
+.gift.on .gift-note{color:var(--gold-1)}
+.gift.hero.on{background:linear-gradient(165deg,rgba(201,168,106,.24),rgba(201,168,106,.05))}
+
+/* момент розблокування */
+.gift.pop{animation:giftPop .72s var(--spring)}
+@keyframes giftPop{0%{transform:scale(1)}32%{transform:scale(1.075)}100%{transform:scale(1)}}
+.gift.pop::after{content:"";position:absolute;inset:0;border-radius:var(--r-md);pointer-events:none;
+  background:linear-gradient(105deg,transparent 28%,rgba(232,213,168,.5),transparent 72%);
+  transform:translateX(-120%);animation:giftSweep .95s var(--ease)}
+@keyframes giftSweep{to{transform:translateX(120%)}}
+
+/* ============================================================
+   СЦЕНА / КРОКИ
+   ============================================================ */
+.stage{position:relative}
+
+.step{display:none}
+.step.live{display:block;animation:stepIn .6s var(--ease)}
+@keyframes stepIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+.step.out{animation:stepOut .3s var(--ease) forwards}
+@keyframes stepOut{to{opacity:0;transform:translateY(-12px) scale(.99)}}
+
+.q-kicker{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--gold-1);margin-bottom:14px}
+.q-kicker::before{content:"";width:22px;height:1px;background:linear-gradient(90deg,var(--gold-1),transparent)}
+
+.q-title{font-family:var(--serif);font-weight:500;font-size:clamp(25px,4.6vw,40px);line-height:1.14;
+  letter-spacing:-.015em;margin:0 0 10px}
+.q-sub{color:var(--muted);font-size:clamp(14px,1.6vw,15.5px);margin:0 0 clamp(20px,3vw,28px);max-width:62ch;line-height:1.6}
+
+/* ---- картки опцій ---- */
+.opts{display:grid;gap:12px}
+.opts.cols2{grid-template-columns:repeat(2,1fr)}
+.opts.cols3{grid-template-columns:repeat(3,1fr)}
+
+.opt{position:relative;overflow:hidden;cursor:pointer;text-align:left;width:100%;
+  font-family:inherit;color:inherit;
+  border:1px solid var(--line);border-radius:var(--r-lg);
+  background:linear-gradient(180deg,rgba(255,255,255,.048),rgba(255,255,255,.015));
+  padding:clamp(16px,2.2vw,22px);
+  display:flex;flex-direction:column;gap:10px;
+  transition:border-color .35s var(--ease),transform .35s var(--ease),box-shadow .35s var(--ease),background .35s var(--ease);
+  animation:optIn .5s var(--ease) both}
+@keyframes optIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.opt:hover{border-color:var(--line-2);transform:translateY(-3px);
+  box-shadow:0 20px 44px -22px rgba(0,0,0,.9)}
+.opt:focus-visible{outline:2px solid var(--gold-1);outline-offset:3px}
+
+.opt-top{display:flex;align-items:center;gap:12px}
+.opt-ico{width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(255,255,255,.055);border:1px solid var(--line);transition:all .35s var(--ease)}
+.opt-ico svg{width:19px;height:19px;opacity:.78;transition:opacity .35s var(--ease)}
+.opt-name{font-size:16.5px;font-weight:700;letter-spacing:-.005em;line-height:1.25}
+.opt-note{font-size:13px;color:var(--muted);line-height:1.5}
+.opt-price{margin-top:auto;font-size:12.5px;font-weight:700;letter-spacing:.03em;color:var(--gold-1);
+  font-variant-numeric:tabular-nums}
+.opt-list{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:5px}
+.opt-list li{font-size:11.5px;color:var(--faint);background:rgba(255,255,255,.05);
+  border:1px solid var(--line);border-radius:999px;padding:3px 9px;line-height:1.4}
+
+.opt.sel{border-color:var(--gold-line);
+  background:linear-gradient(165deg,rgba(201,168,106,.16),rgba(201,168,106,.03));
+  box-shadow:0 18px 44px -20px rgba(201,168,106,.45)}
+.opt.sel .opt-ico{background:linear-gradient(145deg,var(--gold-2),var(--gold-1) 50%,var(--gold-3));border-color:transparent;
+  box-shadow:0 5px 16px rgba(201,168,106,.42)}
+.opt.sel .opt-ico svg{opacity:1}
+.opt.sel .opt-ico svg path,.opt.sel .opt-ico svg circle,.opt.sel .opt-ico svg rect,.opt.sel .opt-ico svg line{stroke:#15110a}
+.opt.sel .opt-list li{border-color:rgba(201,168,106,.25);color:rgba(243,240,234,.6)}
+
+.opt .tick{position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;opacity:0;transform:scale(.4);
+  background:linear-gradient(145deg,var(--gold-2),var(--gold-1));
+  transition:all .4s var(--spring)}
+.opt .tick svg{width:12px;height:12px}
+.opt.sel .tick{opacity:1;transform:scale(1)}
+
+.opt .ripple{position:absolute;border-radius:50%;transform:scale(0);pointer-events:none;
+  background:radial-gradient(circle,rgba(232,213,168,.4),transparent 70%);animation:rip .62s var(--ease) forwards}
+@keyframes rip{to{transform:scale(2.6);opacity:0}}
+
+.badge{position:absolute;top:0;right:0;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:#15110a;background:linear-gradient(100deg,var(--gold-2),var(--gold-1));
+  padding:5px 12px;border-bottom-left-radius:12px}
+.opt.sel .badge{top:0;right:0}
+.opt.has-badge .tick{top:44px}
+
+/* ---- слайдер площі ---- */
+.area-wrap{border:1px solid var(--line);border-radius:var(--r-xl);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  padding:clamp(22px,3.4vw,36px);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+.area-read{text-align:center;margin-bottom:clamp(20px,3vw,30px)}
+.area-num{font-family:var(--serif);font-weight:600;font-size:clamp(60px,13vw,104px);line-height:.94;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+  background:linear-gradient(170deg,#FFF9EC,var(--gold-2) 42%,var(--gold-1) 78%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 6px 26px rgba(201,168,106,.3))}
+.area-unit{font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--muted);margin-top:6px}
+
+.rng{position:relative;padding:6px 0 2px}
+.rng input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;
+  margin:0;display:block;cursor:grab}
+.rng input[type=range]:active{cursor:grabbing}
+.rng-track{position:absolute;left:0;right:0;top:50%;height:5px;margin-top:-2.5px;border-radius:999px;
+  background:rgba(255,255,255,.1);pointer-events:none}
+.rng-done{position:absolute;left:0;top:0;bottom:0;width:var(--p,20%);border-radius:999px;
+  background:linear-gradient(90deg,var(--gold-3),var(--gold-1) 55%,var(--gold-2));
+  box-shadow:0 0 16px rgba(201,168,106,.55)}
+.rng input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:26px;height:26px;border-radius:50%;border:none;position:relative;
+  background:linear-gradient(145deg,#FFF8E8,var(--gold-1) 60%,var(--gold-3));
+  box-shadow:0 3px 14px rgba(0,0,0,.6),0 0 0 5px rgba(201,168,106,.17),inset 0 1px 0 rgba(255,255,255,.7);
+  transition:box-shadow .25s var(--ease),transform .25s var(--spring)}
+.rng input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.1);box-shadow:0 3px 18px rgba(0,0,0,.6),0 0 0 8px rgba(201,168,106,.2),inset 0 1px 0 rgba(255,255,255,.7)}
+.rng input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;border:none;
+  background:linear-gradient(145deg,#FFF8E8,var(--gold-1) 60%,var(--gold-3));
+  box-shadow:0 3px 14px rgba(0,0,0,.6),0 0 0 5px rgba(201,168,106,.17)}
+.rng input[type=range]::-moz-range-track{background:transparent}
+.rng input[type=range]:focus-visible{outline:none}
+.rng input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--gold-1),0 3px 14px rgba(0,0,0,.6)}
+
+.rng-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);
+  margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px}
+.chip{cursor:pointer;font-family:inherit;color:var(--muted);font-size:13.5px;font-weight:600;
+  padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.035);
+  font-variant-numeric:tabular-nums;
+  transition:all .3s var(--ease)}
+.chip:hover{color:var(--text);border-color:var(--line-2);transform:translateY(-1px)}
+.chip.sel{color:#15110a;border-color:transparent;background:linear-gradient(100deg,var(--gold-2),var(--gold-1));
+  box-shadow:0 6px 18px -6px rgba(201,168,106,.6)}
+.chip:focus-visible{outline:2px solid var(--gold-1);outline-offset:3px}
+
+/* ============================================================
+   НАВІГАЦІЯ
+   ============================================================ */
+.nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:clamp(20px,3vw,30px);flex-wrap:wrap}
+
+.btn{cursor:pointer;font-family:inherit;font-size:14.5px;font-weight:700;letter-spacing:.02em;
+  border-radius:999px;padding:14px 28px;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:10px;
+  transition:all .35s var(--ease)}
+.btn:focus-visible{outline:2px solid var(--gold-1);outline-offset:3px}
+.btn svg{width:15px;height:15px}
+
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--muted)}
+.btn-ghost:hover{color:var(--text);border-color:var(--line-2);background:var(--surface)}
+
+.btn-gold{position:relative;overflow:hidden;color:#15110a;
+  background:linear-gradient(100deg,var(--gold-2),var(--gold-1) 52%,var(--gold-3));
+  box-shadow:0 14px 34px -14px rgba(201,168,106,.75),inset 0 1px 0 rgba(255,255,255,.45)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 20px 44px -14px rgba(201,168,106,.85),inset 0 1px 0 rgba(255,255,255,.45)}
+.btn-gold::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.55),transparent 70%);
+  transform:translateX(-130%);transition:transform .75s var(--ease)}
+.btn-gold:hover::after{transform:translateX(130%)}
+.btn-gold:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-gold.wide{width:100%;justify-content:center;padding:17px 28px;font-size:15.5px}
+
+.dots{display:flex;gap:7px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16);transition:all .45s var(--ease)}
+.dot.done{background:var(--gold-3)}
+.dot.now{width:26px;border-radius:999px;background:linear-gradient(90deg,var(--gold-1),var(--gold-2))}
+
+/* ============================================================
+   РЕЗУЛЬТАТ
+   ============================================================ */
+.res-hero{position:relative;overflow:hidden;text-align:center;
+  border:1px solid var(--gold-line);border-radius:var(--r-xl);
+  background:
+    radial-gradient(ellipse 80% 120% at 50% -10%,rgba(201,168,106,.2),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  padding:clamp(28px,4.6vw,48px) clamp(20px,3.4vw,40px);
+  box-shadow:0 30px 70px -30px rgba(201,168,106,.4);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+.res-kicker{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-1);margin-bottom:16px}
+
+.res-sum{position:relative;display:inline-block;font-family:var(--serif);font-weight:600;
+  font-size:clamp(30px,7.4vw,62px);line-height:1.06;letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(170deg,#FFFBF2,var(--gold-2) 40%,var(--gold-1) 76%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 8px 30px rgba(201,168,106,.34))}
+.res-sum .dash{-webkit-text-fill-color:var(--gold-3);opacity:.75;padding:0 .12em;font-weight:400}
+
+.res-permeter{margin-top:14px;font-size:14.5px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.res-permeter b{color:var(--gold-2);font-weight:700}
+
+.res-chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:22px}
+.res-chips span{font-size:12px;color:var(--muted);background:rgba(255,255,255,.055);
+  border:1px solid var(--line);border-radius:999px;padding:5px 13px;letter-spacing:.02em}
+
+/* розкладка */
+.panel{border:1px solid var(--line);border-radius:var(--r-lg);
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.013));
+  padding:clamp(18px,2.8vw,26px);margin-top:14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.panel-title{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+
+.rows{display:flex;flex-direction:column;gap:2px}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.055)}
+.row:last-child{border-bottom:none}
+.row-k{font-size:14px;color:var(--muted);line-height:1.45}
+.row-k i{display:block;font-style:normal;font-size:11.5px;color:var(--faint);margin-top:2px}
+.row-v{font-size:14.5px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.row.total{margin-top:8px;padding-top:16px;border-top:1px solid var(--gold-line);border-bottom:none}
+.row.total .row-k{color:var(--text);font-weight:700;font-size:15px}
+.row.total .row-v{font-family:var(--serif);font-size:21px;font-weight:600;
+  background:linear-gradient(100deg,var(--gold-2),var(--gold-1));-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent}
+
+.note{display:flex;gap:11px;align-items:flex-start;margin-top:16px;padding:14px 16px;border-radius:var(--r-md);
+  background:rgba(255,255,255,.03);border:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.55}
+.note svg{width:15px;height:15px;flex:0 0 15px;margin-top:2px;opacity:.6}
+.note b{color:var(--text);font-weight:600}
+
+/* блок подарунків на результаті */
+.unlocked{display:grid;gap:9px}
+.ul-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-md);
+  border:1px solid var(--gold-line);background:linear-gradient(100deg,rgba(201,168,106,.13),rgba(201,168,106,.02))}
+.ul-ico{width:26px;height:26px;flex:0 0 26px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--gold-2),var(--gold-1) 50%,var(--gold-3));box-shadow:0 3px 10px rgba(201,168,106,.4)}
+.ul-ico svg{width:13px;height:13px}
+.ul-ico svg path,.ul-ico svg circle,.ul-ico svg rect{stroke:#15110a}
+.ul-txt{font-size:13.5px;font-weight:600;line-height:1.4}
+.ul-txt i{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--gold-1);margin-top:1px}
+.ul-row.hero{background:linear-gradient(100deg,rgba(201,168,106,.26),rgba(201,168,106,.05));
+  box-shadow:0 10px 28px -14px rgba(201,168,106,.55)}
+
+/* ============================================================
+   ФОРМА
+   ============================================================ */
+.form-card{position:relative;overflow:hidden;border:1px solid var(--gold-line);border-radius:var(--r-xl);
+  background:
+    radial-gradient(ellipse 90% 100% at 100% 0%,rgba(201,168,106,.17),transparent 60%),
+    linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.018));
+  padding:clamp(22px,3.6vw,38px);margin-top:14px;
+  box-shadow:0 26px 64px -30px rgba(201,168,106,.42);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+.form-title{font-family:var(--serif);font-weight:500;font-size:clamp(21px,3.3vw,30px);line-height:1.2;
+  letter-spacing:-.015em;margin:0 0 12px}
+.form-title em{font-style:normal;background:linear-gradient(100deg,var(--gold-2),var(--gold-1));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.form-lead{font-size:14.5px;color:var(--muted);line-height:1.62;margin:0 0 24px;max-width:58ch}
+.form-lead b{color:var(--gold-2);font-weight:600}
+
+.fields{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.field label{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px}
+.field input{width:100%;font-family:inherit;font-size:15.5px;font-weight:500;color:var(--text);
+  background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:14px;
+  padding:15px 17px;letter-spacing:.015em;
+  transition:border-color .3s var(--ease),background .3s var(--ease),box-shadow .3s var(--ease)}
+.field input::placeholder{color:rgba(243,240,234,.26)}
+.field input:focus{outline:none;border-color:var(--gold-line);background:rgba(0,0,0,.42);
+  box-shadow:0 0 0 4px rgba(201,168,106,.1)}
+.field input:not(:placeholder-shown):invalid,.field.bad input{border-color:var(--err)}
+.field .msg{font-size:11.5px;color:var(--err);margin-top:6px;min-height:0;display:none}
+.field.bad .msg{display:block}
+
+.consent{display:flex;align-items:flex-start;gap:11px;margin-top:18px;cursor:pointer;
+  font-size:12.5px;color:var(--muted);line-height:1.5}
+.consent input{position:absolute;opacity:0;width:0;height:0}
+.cbox{width:19px;height:19px;flex:0 0 19px;border-radius:6px;border:1px solid var(--line-2);
+  background:rgba(0,0,0,.3);display:grid;place-items:center;margin-top:1px;
+  transition:all .3s var(--ease)}
+.cbox svg{width:11px;height:11px;opacity:0;transform:scale(.4);transition:all .3s var(--spring)}
+.consent input:checked + .cbox{background:linear-gradient(145deg,var(--gold-2),var(--gold-1));border-color:transparent}
+.consent input:checked + .cbox svg{opacity:1;transform:scale(1)}
+.consent input:focus-visible + .cbox{outline:2px solid var(--gold-1);outline-offset:3px}
+.consent a{color:var(--gold-1);text-decoration:underline;text-underline-offset:2px}
+.consent.bad .cbox{border-color:var(--err)}
+
+.form-foot{margin-top:22px}
+.trust{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:16px;
+  font-size:11.5px;color:var(--faint);letter-spacing:.02em}
+.trust span{display:inline-flex;align-items:center;gap:6px}
+.trust svg{width:12px;height:12px;opacity:.55}
+
+.send-err{display:none;margin-top:14px;padding:12px 15px;border-radius:var(--r-md);
+  border:1px solid rgba(232,132,111,.4);background:rgba(232,132,111,.1);
+  font-size:12.5px;color:#F0A897;line-height:1.5}
+.send-err.on{display:block}
+.send-err a{color:var(--gold-2)}
+
+.spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(21,17,10,.25);
+  border-top-color:#15110a;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   SUCCESS
+   ============================================================ */
+.done-card{text-align:center;border:1px solid var(--gold-line);border-radius:var(--r-xl);
+  background:
+    radial-gradient(ellipse 80% 110% at 50% -10%,rgba(201,168,106,.22),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  padding:clamp(34px,5.6vw,60px) clamp(22px,3.6vw,44px);
+  box-shadow:0 30px 70px -30px rgba(201,168,106,.45);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.done-ico{width:72px;height:72px;margin:0 auto 24px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--gold-2),var(--gold-1) 50%,var(--gold-3));
+  box-shadow:0 14px 40px -10px rgba(201,168,106,.7),inset 0 2px 0 rgba(255,255,255,.5);
+  animation:doneIn .8s var(--spring)}
+@keyframes doneIn{from{opacity:0;transform:scale(.4) rotate(-20deg)}to{opacity:1;transform:none}}
+.done-ico svg{width:32px;height:32px}
+.done-title{font-family:var(--serif);font-weight:500;font-size:clamp(25px,4.4vw,38px);line-height:1.16;
+  letter-spacing:-.018em;margin:0 0 14px}
+.done-lead{font-size:15px;color:var(--muted);line-height:1.65;margin:0 auto 28px;max-width:50ch}
+.done-lead b{color:var(--text);font-weight:600}
+.done-list{text-align:left;max-width:440px;margin:0 auto;display:grid;gap:9px}
+.done-cta{margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* ============================================================
+   АДАПТИВ
+   ============================================================ */
+@media (max-width:860px){
+  .opts.cols3{grid-template-columns:1fr}
+  .res-hero{padding-left:16px;padding-right:16px}
+}
+@media (max-width:680px){
+  .opts.cols2{grid-template-columns:1fr}
+  .fields{grid-template-columns:1fr}
+  .gift-track{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .gift{padding:9px 4px 10px;border-radius:12px}
+  .gift-ico{width:24px;height:24px;margin-bottom:6px;border-radius:7px}
+  .gift-ico svg{width:12px;height:12px}
+  .gift-label{font-size:9.5px;line-height:1.3;letter-spacing:-.015em}
+  .gift-note{display:none}
+  .brand-sub{display:none}
+  .top-phone span{display:none}
+  .top-phone{padding:10px 12px}
+  .nav{flex-direction:column-reverse;align-items:stretch}
+  .nav .btn{justify-content:center;width:100%}
+  .dots{justify-content:center;margin-top:4px}
+  .trust{gap:10px;font-size:11px}
+}
+@media (max-width:380px){
+  .gift-label{font-size:9.5px}
+  .res-sum{font-size:28px}
+}
+
+/* ============================================================
+   ЗМЕНШЕНИЙ РУХ
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important}
+  .blob{animation:none}
+  .bar-fill::after{display:none}
+  .step.live{animation:none}
+}
+
+/* ============================================================
+   ІНТРО-ЕКРАН (hero) + живa демо-картка
+   ============================================================ */
+body.at-intro .gifts{display:none}
+
+/* Саме .intro-hero, а НЕ .hero: «hero» вже використовується як модифікатор
+   у .gift.hero та .ul-row.hero, і ці правила протікали на них. */
+.intro-hero{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(26px,4.4vw,60px);
+  align-items:center;padding:clamp(6px,2vw,22px) 0}
+
+.hero-kicker{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--gold-1);margin-bottom:18px}
+.hero-kicker::before{content:"";width:22px;height:1px;background:linear-gradient(90deg,var(--gold-1),transparent)}
+
+.hero-h1{font-family:var(--serif);font-weight:600;font-size:clamp(38px,6.6vw,70px);line-height:1.02;
+  letter-spacing:-.03em;margin:0 0 20px}
+.hero-h1 em{display:block;font-style:normal;
+  background:linear-gradient(100deg,#FFF9EC,var(--gold-2) 38%,var(--gold-1) 78%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 6px 28px rgba(201,168,106,.3))}
+
+.hero-lead{font-size:clamp(15px,1.75vw,17px);color:var(--muted);line-height:1.65;margin:0 0 30px;max-width:46ch}
+.hero-lead b{color:var(--text);font-weight:600}
+.hero-lead i{font-style:normal;color:var(--gold-2);font-weight:600}
+
+.hero-cta{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.hero-cta .btn-gold{padding:18px 34px;font-size:15.5px;letter-spacing:.04em;text-transform:uppercase}
+.hero-meta{font-size:12.5px;color:var(--faint);line-height:1.5}
+
+.hero-facts{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:32px;
+  padding-top:24px;border-top:1px solid var(--line)}
+.hero-facts span{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.hero-facts svg{width:13px;height:13px;color:var(--gold-1);flex:0 0 13px}
+.hero-facts b{color:var(--text);font-weight:700}
+
+/* ── демо-картка ── */
+.demo{position:relative;border:1px solid var(--gold-line);border-radius:var(--r-xl);
+  background:
+    radial-gradient(ellipse 85% 70% at 85% 0%,rgba(201,168,106,.2),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.018));
+  padding:clamp(20px,2.6vw,28px);
+  box-shadow:0 36px 80px -34px rgba(201,168,106,.5),0 2px 0 rgba(255,255,255,.05) inset;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.demo::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(140deg,rgba(232,213,168,.4),transparent 36%,transparent 64%,rgba(201,168,106,.26));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;padding:1px}
+
+.demo-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.demo-live{display:inline-flex;align-items:center;gap:8px;font-size:10.5px;font-weight:700;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--muted)}
+.demo-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(127,209,166,.65);
+  animation:pulse 2s var(--ease) infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(127,209,166,0)}100%{box-shadow:0 0 0 0 rgba(127,209,166,0)}}
+.demo-idx{font-size:10.5px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;color:var(--faint);
+  font-variant-numeric:tabular-nums}
+
+.demo-body{transition:opacity .34s var(--ease),transform .34s var(--ease)}
+.demo-body.swap{opacity:0;transform:translateY(8px)}
+
+.demo-title{font-size:clamp(18px,2.2vw,22px);font-weight:700;letter-spacing:-.015em;margin-bottom:11px}
+.demo-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.demo-chips span{font-size:11.5px;color:var(--muted);border:1px solid var(--line);
+  background:rgba(255,255,255,.045);border-radius:999px;padding:4px 12px;line-height:1.45}
+.demo-chips span.hi{color:var(--gold-1);border-color:var(--gold-line);background:var(--gold-soft);font-weight:600}
+
+.demo-label{font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.demo-sum{font-family:var(--serif);font-weight:600;font-size:clamp(27px,4.2vw,40px);line-height:1.1;
+  letter-spacing:-.025em;font-variant-numeric:tabular-nums;white-space:nowrap;
+  background:linear-gradient(170deg,#FFFBF2,var(--gold-2) 40%,var(--gold-1) 78%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.demo-sum .dash{-webkit-text-fill-color:var(--gold-3);opacity:.7;padding:0 .1em;font-weight:400}
+
+/* смуга подарунка */
+.demo-bar{position:relative;height:6px;border-radius:999px;background:rgba(255,255,255,.09);
+  margin:18px 46px 20px 0}
+.demo-bar-fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--gold-3),var(--gold-1) 50%,var(--gold-2));
+  box-shadow:0 0 14px rgba(201,168,106,.55);transition:width 1.25s var(--ease)}
+.demo-gift{position:absolute;right:-46px;top:50%;width:36px;height:36px;margin-top:-18px;border-radius:50%;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--gold-2),var(--gold-1) 50%,var(--gold-3));
+  box-shadow:0 6px 20px -4px rgba(201,168,106,.75);transition:transform .5s var(--spring)}
+.demo-gift svg{width:17px;height:17px}
+.demo-gift svg path,.demo-gift svg rect{stroke:#15110a}
+.demo-gift.pop{transform:scale(1.18)}
+
+.demo-rows{display:flex;flex-direction:column}
+.demo-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:9px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:13px}
+.demo-row:last-child{border-bottom:none}
+.demo-row .k{color:var(--muted)}
+.demo-row .v{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.demo-foot{display:flex;align-items:center;gap:9px;margin-top:16px;padding-top:15px;
+  border-top:1px solid var(--gold-line);font-size:12.5px;color:var(--gold-1);line-height:1.45}
+.demo-foot svg{width:14px;height:14px;flex:0 0 14px}
+
+@media (max-width:900px){
+  .intro-hero{grid-template-columns:1fr;gap:30px}
+  .hero-lead{max-width:none}
+  .demo-sum{font-size:clamp(25px,7vw,36px)}
+}
+@media (max-width:680px){
+  .hero-cta{flex-direction:column;align-items:stretch}
+  .hero-cta .btn-gold{width:100%;justify-content:center}
+  .hero-meta{text-align:center}
+  .hero-facts{gap:8px 16px}
+  .demo-bar{margin-right:42px}
+}
+@media (prefers-reduced-motion:reduce){
+  .demo-bar-fill{transition:none}
+  .demo-body{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="atmo" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="shell">
+
+  <!-- ───────── ШАПКА ───────── -->
+  <div class="top">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#15110a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <div class="brand-name" id="brandName">Ремонт під ключ</div>
+        <div class="brand-sub" id="brandSub">Калькулятор вартості ремонту</div>
+      </div>
+    </div>
+    <a class="top-phone" id="brandPhone" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>
+      </svg>
+      <span id="brandPhoneTxt">+38 000 000 00 00</span>
+    </a>
+  </div>
+
+  <!-- ───────── ПОВЗУНОК ПОДАРУНКІВ ───────── -->
+  <div class="gifts">
+    <div class="gifts-head">
+      <div class="gifts-title">Ваші подарунки</div>
+      <div class="gifts-pct"><span id="pctNum">0</span>%</div>
+    </div>
+    <div class="bar" role="progressbar" aria-label="Прогрес до подарунків" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+      <div class="bar-fill" id="barFill"></div>
+    </div>
+    <div class="gift-track" id="giftTrack"></div>
+  </div>
+
+  <!-- ───────── СЦЕНА ───────── -->
+  <div class="stage">
+
+    <!-- ───────── ІНТРО ───────── -->
+    <section class="step" data-step="intro">
+      <div class="intro-hero">
+
+        <div class="hero-left">
+          <div class="hero-kicker" id="heroKicker">Калькулятор вартості ремонту</div>
+          <h1 class="hero-h1"><span id="heroT1">Скільки коштує</span><em id="heroT2">ваш ремонт?</em></h1>
+          <p class="hero-lead" id="heroLead"></p>
+          <div class="hero-cta">
+            <button class="btn btn-gold" id="startBtn">
+              <span id="startTxt">Розрахувати вартість</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+            <div class="hero-meta" id="heroMeta"></div>
+          </div>
+          <div class="hero-facts" id="heroFacts"></div>
+        </div>
+
+        <div class="hero-right">
+          <div class="demo" aria-hidden="true">
+            <div class="demo-top">
+              <div class="demo-live"><span class="demo-dot"></span> Рахуємо наживо</div>
+              <div class="demo-idx" id="dmIdx">приклад 1/4</div>
+            </div>
+            <div class="demo-body" id="dmBody">
+              <div class="demo-title" id="dmTitle"></div>
+              <div class="demo-chips" id="dmChips"></div>
+              <div class="demo-label">Орієнтовна вартість ремонту</div>
+              <div class="demo-sum"><span id="dmMin">0</span><span class="dash">—</span><span id="dmMax">0</span></div>
+              <div class="demo-bar">
+                <div class="demo-bar-fill" id="dmBar"></div>
+                <div class="demo-gift" id="dmGift"></div>
+              </div>
+              <div class="demo-rows" id="dmRows"></div>
+              <div class="demo-foot" id="dmFoot"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Питання 1 — тип обʼєкта -->
+    <section class="step" data-step="0">
+      <div class="q-kicker">Питання 1 із 4</div>
+      <h1 class="q-title">Який у вас тип обʼєкта?</h1>
+      <p class="q-sub">Від стану приміщення залежить обсяг демонтажу, стан комунікацій та вирівнювання — це найбільше впливає на бюджет ремонту.</p>
+      <div class="opts cols2" id="opts0"></div>
+    </section>
+
+    <!-- Питання 2 — площа -->
+    <section class="step" data-step="1">
+      <div class="q-kicker">Питання 2 із 4</div>
+      <h2 class="q-title">Яка площа приміщення?</h2>
+      <p class="q-sub">Вкажіть загальну площу за документами. Важливо: чим менша площа — тим дорожчий квадратний метр, бо кухня та санвузли займають у ній більшу частку.</p>
+      <div class="area-wrap">
+        <div class="area-read">
+          <div class="area-num" id="areaNum">65</div>
+          <div class="area-unit">квадратних метрів</div>
+        </div>
+        <div class="rng">
+          <div class="rng-track" aria-hidden="true"><div class="rng-done" id="rngDone"></div></div>
+          <input type="range" id="areaRange" min="20" max="300" step="1" value="65"
+                 aria-label="Площа приміщення у квадратних метрах">
+        </div>
+        <div class="rng-ends"><span>20 м²</span><span>300 м²</span></div>
+        <div class="chips" id="areaChips"></div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" data-back>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Назад
+        </button>
+        <div class="dots" id="dots"></div>
+        <button class="btn btn-gold" id="areaNext">
+          Далі
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Питання 3 — рівень ремонту -->
+    <section class="step" data-step="2">
+      <div class="q-kicker">Питання 3 із 4</div>
+      <h2 class="q-title">Який рівень ремонту плануєте?</h2>
+      <p class="q-sub">Рівень визначає і складність робіт, і класи чистових матеріалів. Нижче — реальні приклади того, на що можна розраховувати в кожній категорії.</p>
+      <div class="opts cols3" id="opts2"></div>
+    </section>
+
+    <!-- Питання 4 — дизайн-проєкт -->
+    <section class="step" data-step="3">
+      <div class="q-kicker">Питання 4 із 4</div>
+      <h2 class="q-title">Чи потрібен дизайн-проєкт?</h2>
+      <p class="q-sub">Ремонт без проєкту обходиться дорожче мінімум на 15–25%: переробки, несистемна закупівля матеріалів, простої бригади. З проєктом бюджет фіксується заздалегідь.</p>
+      <div class="opts cols2" id="opts3"></div>
+    </section>
+
+    <!-- Результат -->
+    <section class="step" data-step="4">
+
+      <div class="res-hero">
+        <div class="res-kicker">Орієнтовна вартість ремонту</div>
+        <div class="res-sum" id="resSum">
+          <span id="sumMin">0</span><span class="dash">—</span><span id="sumMax">0</span>
+        </div>
+        <div class="res-permeter">≈ <b><span id="ppmMin">0</span>–<span id="ppmMax">0</span> $/м²</b> · розрахунок на <b id="resArea">65 м²</b></div>
+        <div class="res-chips" id="resChips"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">З чого складається сума</div>
+        <div class="rows" id="breakdown"></div>
+        <div class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <div id="extrasNote"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Розблоковані подарунки — 4 із 4</div>
+        <div class="unlocked" id="unlockedList"></div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="form-title">Щоб отримати <em>точну</em> вартість ремонту саме для вас — залиште контакти</h3>
+        <p class="form-lead">Прораб і дизайнер прорахують ваш обʼєкт по позиціях і надішлють детальний кошторис. А ще ви <b>у подарунок отримаєте безкоштовну консультацію, на якій ми зробимо дизайн-макет вашої кімнати</b>.</p>
+
+        <form id="leadForm" novalidate>
+          <div class="fields">
+            <div class="field" id="fName">
+              <label for="inName">Ваше імʼя</label>
+              <input type="text" id="inName" name="name" placeholder="Олександр" autocomplete="given-name" required>
+              <div class="msg">Будь ласка, вкажіть імʼя</div>
+            </div>
+            <div class="field" id="fPhone">
+              <label for="inPhone">Номер телефону</label>
+              <input type="tel" id="inPhone" name="phone" placeholder="+380 __ ___ __ __" inputmode="tel" autocomplete="tel" required>
+              <div class="msg">Вкажіть повний номер у форматі +380 XX XXX XX XX</div>
+            </div>
+          </div>
+
+          <label class="consent" id="fConsent">
+            <input type="checkbox" id="inConsent" required>
+            <span class="cbox" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#15110a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            <span>Я погоджуюсь із <a href="#" id="policyLink" target="_blank" rel="noopener">політикою конфіденційності</a> та даю згоду на обробку моїх даних</span>
+          </label>
+
+          <div class="form-foot">
+            <button type="submit" class="btn btn-gold wide" id="submitBtn">
+              <span id="submitTxt">Отримати точний розрахунок</span>
+              <svg id="submitArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+            <div class="send-err" id="sendErr"></div>
+            <div class="trust">
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Дані не передаємо третім особам</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Відповідаємо протягом 2 годин</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Без спаму та навʼязування</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="nav">
+        <button class="btn btn-ghost" data-back>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Змінити відповіді
+        </button>
+      </div>
+    </section>
+
+    <!-- Success -->
+    <section class="step" data-step="5">
+      <div class="done-card">
+        <div class="done-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#15110a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <h2 class="done-title">Дякуємо, <span id="doneName">друже</span>! Заявку прийнято</h2>
+        <p class="done-lead">Ми вже бачимо ваш розрахунок і звʼяжемося з вами <b>протягом 2 робочих годин</b> за номером <b id="donePhone"></b>.</p>
+        <div class="done-list" id="doneList"></div>
+        <div class="done-cta">
+          <a class="btn btn-gold" id="doneCall" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+            Зателефонувати зараз
+          </a>
+          <button class="btn btn-ghost" id="restartBtn">Порахувати ще раз</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ════════════════════════════════════════════════════════════════════
+   ███  НАЛАШТУВАННЯ  ███
+   Усе, що потрібно правити — тут. Нижче цього блоку код можна не чіпати.
+   ════════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+
+  /* ── 1. БРЕНД ─────────────────────────────────────────────────── */
+  brand: {
+    name:  'Ремонт під ключ',                  // назва студії
+    sub:   'Калькулятор вартості ремонту',
+    phone: '+38 000 000 00 00',                // показується у шапці та на фінальному екрані
+    policyUrl: '#'                             // посилання на політику конфіденційності
+  },
+
+  /* ── 2. КУДИ ЛЕТЯТЬ ЗАЯВКИ ────────────────────────────────────── */
+  /* Варіант А (за замовчуванням) — Telegram-бот.
+     Як отримати дані — див. README.md.
+     ⚠ Токен видно у вихідному коді сторінки. Деталі й безпечніша
+       альтернатива — у README, розділ «Безпека». */
+  telegram: {
+    botToken: 'PASTE_YOUR_BOT_TOKEN_HERE',     // напр. '7123456789:AAE...'
+    chatId:   'PASTE_YOUR_CHAT_ID_HERE'        // напр. '-1001234567890' або '123456789'
+  },
+
+  /* Варіант Б — свій вебхук (Cloudflare Worker / Make / n8n / Apps Script).
+     Якщо тут вказати URL — заявки полетять туди, а Telegram буде проігноровано.
+     Токен тоді лежить на сервері й у коді сторінки його немає. */
+  webhookUrl: '',
+
+  /* ── 3. КУРС ВАЛЮТИ ───────────────────────────────────────────── */
+  /* Послуги студії у прайсі в гривні, калькулятор показує все в $.
+     ⚠ ОНОВЛЮВАТИ при суттєвій зміні курсу. */
+  uahPerUsd: 42,
+
+  /* ── 4. ЦІНИ ──────────────────────────────────────────────────── */
+  /* Роботи бригади + чорнові матеріали, $/м² (орієнтир для 100 м²):
+     профілі, штукатурка, стяжка, труби, електропроводка тощо. */
+  baseWorks: { min: 450, max: 500 },
+
+  /* Меблі + техніка + текстиль + декор, $/м² — НЕ входить у головну суму,
+     показується окремим інформаційним рядком. */
+  extrasFrom: 355,
+
+  /* Площа: менша площа = дорожчий м² (кухня й санвузли займають більшу частку).
+     Між точками значення інтерполюється, тому ціна змінюється плавно. */
+  areaCurve: [[20,1.22],[40,1.18],[60,1.12],[100,1.00],[160,0.95],[300,0.90]],
+
+  /* Прайс дизайн-проєкту та авторського нагляду, у гривні */
+  services: {
+    project:     { flatUpTo60: 72000, perM2_60_160: 1200, perM2_over160: 1000 },
+    supervision: { flatUpTo60: 60000, perM2_60_160: 1000, perM2_over160:  800 }
+  },
+
+  /* ── 5. ПИТАННЯ ───────────────────────────────────────────────── */
+  area: { min: 20, max: 300, def: 65, presets: [40, 60, 80, 100, 140] },
+
+  objectTypes: [
+    { id:'new',    icon:'building', k:1.00, name:'Новобудова',
+      note:'«Сіра коробка» без ремонту — стіни, стяжка, вікна. Демонтаж не потрібен.' },
+    { id:'old',    icon:'wrench',   k:1.15, name:'Вторинка',
+      note:'Капітальний ремонт: демонтаж, заміна старих комунікацій, вирівнювання кривих стін.' },
+    { id:'house',  icon:'home',     k:1.10, name:'Приватний будинок',
+      note:'Більше інженерії: опалення, вентиляція, кілька санвузлів, сходи.' },
+    { id:'comm',   icon:'store',    k:1.05, name:'Комерційний обʼєкт',
+      note:'Офіс, салон, кафе — інші норми, вимоги до пожбезпеки та вентиляції.' }
+  ],
+
+  levels: [
+    { id:'standard', name:'Стандарт', kWorks:1.00, finish:[180,260],
+      note:'Надійно та без надмірностей. Якісні матеріали українського й польського ринку.',
+      list:['ламінат','плитка Україна/Польща','двері стандарт','точкові світильники','фарбування'] },
+    { id:'comfort',  name:'Комфорт',  kWorks:1.12, finish:[260,380], badge:'Обирають найчастіше',
+      note:'Оптимальний баланс ціни та рівня. Саме тут більшість сучасних рішень.',
+      list:['кварцвініл, керамограніт','приховані двері','вбудовані змішувачі','трекове освітлення','штучний камінь'] },
+    { id:'premium',  name:'Преміум',  kWorks:1.28, finish:[380,550],
+      note:'Європейські бренди, складні вузли, дизайнерські рішення без компромісів.',
+      list:['паркет','плитка Іспанія/Італія','кухня Італія/Німеччина','магнітні трек-системи','камʼяний шпон'] }
+  ],
+
+  designOptions: [
+    { id:'have',  icon:'folder', project:false, supervision:false, name:'Дизайн-проєкт вже є',
+      note:'У вас на руках готові креслення — рахуємо тільки ремонт.' },
+    { id:'need',  icon:'ruler',  project:true,  supervision:false, name:'Потрібен дизайн-проєкт', badge:'Економить 15–25%',
+      note:'Планування, 3D-візуалізації та понад 20 креслень для бригади.' },
+    { id:'full',  icon:'shield', project:true,  supervision:true,  name:'Проєкт + авторський нагляд',
+      note:'Дизайнер контролює бригаду на обʼєкті та захищає ваш бюджет.' },
+    { id:'dunno', icon:'chat',   project:false, supervision:false, name:'Ще не визначився',
+      note:'Розберемося на безкоштовній консультації — порадимо під вашу ситуацію.' }
+  ],
+
+  /* ── 6. ПЕРШИЙ ЕКРАН ──────────────────────────────────────────── */
+  intro: {
+    kicker: 'Калькулятор вартості ремонту',
+    title1: 'Скільки коштує',            // перший рядок заголовка
+    title2: 'ваш ремонт?',               // другий рядок — золотом
+    lead:   'Дайте відповідь на <b>4 питання</b> — і ви побачите орієнтовну вилку вартості свого ремонту за реальними ринковими цінами. ' +
+            'А за кожну відповідь відкриваєте подарунок: від консультації дизайнера до <i>безкоштовного дизайн-макета вашої кімнати</i>.',
+    cta:    'Розрахувати вартість',
+    meta:   '≈ 1 хвилина<br>без реєстрації',
+    facts:  ['<b>4</b> питання', '<b>Реальні</b> ринкові ціни', '<b>4</b> подарунки'],
+
+    /* Приклади, які по черзі «рахуються» у картці справа.
+       Рахуються тією самою формулою, що й справжній калькулятор. */
+    demos: [
+      { type:'new',   area:95,  level:'standard', design:'need' },
+      { type:'old',   area:62,  level:'comfort',  design:'full' },
+      { type:'house', area:180, level:'premium',  design:'need' },
+      { type:'new',   area:44,  level:'comfort',  design:'have' }
+    ],
+    demoEveryMs: 4200
+  },
+
+  /* ── 7. ПОДАРУНКИ (повзунок) ──────────────────────────────────── */
+  gifts: [
+    { icon:'chat',   label:'Консультація дизайнера',   note:'безкоштовно, 40 хв' },
+    { icon:'calc',   label:'Розрахунок бюджету',        note:'по позиціях' },
+    { icon:'list',   label:'Чек-лист помилок ремонту',  note:'15 пунктів' },
+    { icon:'gift',   label:'Дизайн-макет кімнати',      note:'3D-візуалізація', hero:true }
+  ]
+};
+/* ════════════════════════  КІНЕЦЬ НАЛАШТУВАНЬ  ════════════════════ */
+
+
+/* ───────────────────────── Іконки ───────────────────────── */
+const S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">';
+const ICON = {
+  building: S+'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/><path d="M10 22v-3h4v3"/></svg>',
+  wrench:   S+'<path d="M14.7 6.3a4 4 0 1 0 5 5L21 21l-3 0-7.5-7.5a4 4 0 0 1-5-5L3 5l3-3 5.2 5.2z"/></svg>',
+  home:     S+'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>',
+  store:    S+'<path d="M3 9h18l-1.5-5h-15z"/><path d="M4.5 9v12h15V9"/><path d="M9 21v-6h6v6"/></svg>',
+  folder:   S+'<path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  ruler:    S+'<path d="m15 2 7 7L9 22l-7-7z"/><path d="m7 11 2 2M11 7l2 2M11 15l2 2M15 11l2 2"/></svg>',
+  shield:   S+'<path d="M12 2 4 5.5V12c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5.5z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>',
+  chat:     S+'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.3 9.3 0 0 1-3.6-.7L3 21l1.4-4.1A8.1 8.1 0 0 1 3 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 9 8.4z"/></svg>',
+  calc:     S+'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8v3H8z"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 17h.01M12 17h.01M15.5 17h.01"/></svg>',
+  list:     S+'<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+  gift:     S+'<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18"/><path d="M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z"/></svg>',
+  check:    '<svg viewBox="0 0 24 24" fill="none" stroke="#15110a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  arrowL:   S.replace('1.9','2.2')+'<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>'
+};
+
+/* ───────────────────────── Стан ───────────────────────── */
+const state = { step:0, type:null, area:CONFIG.area.def, areaDone:false, level:null, design:null };
+const STEPS_Q = 4, RESULT = 4, SUCCESS = 5, INTRO = 'intro';
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $  = s => document.querySelector(s);
+const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+
+/* ───────────────────────── Формат ───────────────────────── */
+const TSP = ' ';                                     // тонкий нерозривний пробіл
+const money   = n => '$' + group(Math.round(n));
+const group   = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, TSP);
+const round100 = n => Math.round(n/100)*100;
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ───────────────────────── Математика ───────────────────────── */
+/* Коефіцієнт площі: кусково-лінійна інтерполяція по CONFIG.areaCurve,
+   щоб ціна не стрибала при перетягуванні слайдера. */
+function areaK(a){
+  const c = CONFIG.areaCurve;
+  if (a <= c[0][0]) return c[0][1];
+  for (let i=1; i<c.length; i++){
+    const x1=c[i-1][0], y1=c[i-1][1], x2=c[i][0], y2=c[i][1];
+    if (a <= x2) return y1 + (a-x1)/(x2-x1)*(y2-y1);
+  }
+  return c[c.length-1][1];
+}
+
+/* Прайс студії за площею, у гривні.
+   У прайсі ставка за м² після 160 м² нижча, тому «в лоб» 161 м² виходив
+   ДЕШЕВШЕ за 160 м². Нижня межа прибирає цей розрив: ціна ніколи не падає
+   при зростанні площі (160–192 м² — плато, далі знову зростає). */
+function tierPrice(t, a){
+  if (a < 60)   return t.flatUpTo60;
+  if (a <= 160) return a * t.perM2_60_160;
+  return Math.max(a * t.perM2_over160, 160 * t.perM2_60_160);
+}
+
+function servicesUah(a, d){
+  if (!d) return 0;
+  let uah = 0;
+  if (d.project)     uah += tierPrice(CONFIG.services.project, a);
+  if (d.supervision) uah += tierPrice(CONFIG.services.supervision, a);
+  return uah;
+}
+
+/* src — довільний набір відповідей; без аргументу рахує поточні відповіді
+   користувача. Демо-картка на інтро використовує ту саму формулу. */
+function calc(src){
+  const q  = src || state;
+  const a  = q.area;
+  const t  = CONFIG.objectTypes.find(x => x.id === q.type);
+  const l  = CONFIG.levels.find(x => x.id === q.level);
+  const d  = CONFIG.designOptions.find(x => x.id === q.design);
+  const kA = areaK(a), kT = t ? t.k : 1, kL = l ? l.kWorks : 1;
+
+  const wPm = [CONFIG.baseWorks.min*kA*kT*kL, CONFIG.baseWorks.max*kA*kT*kL];
+  const fPm = l ? [l.finish[0]*kA*kT, l.finish[1]*kA*kT] : [0,0];
+
+  const works   = [wPm[0]*a, wPm[1]*a];
+  const finish  = [fPm[0]*a, fPm[1]*a];
+  const repair  = [works[0]+finish[0], works[1]+finish[1]];
+  const srvUah  = servicesUah(a, d);
+  const srvUsd  = srvUah / CONFIG.uahPerUsd;
+  const total   = [repair[0]+srvUsd, repair[1]+srvUsd];
+
+  return {
+    area:a, type:t, level:l, design:d,
+    works, finish, repair, srvUah, srvUsd, total,
+    perM2: [repair[0]/a, repair[1]/a],
+    extras: CONFIG.extrasFrom * a
+  };
+}
+
+/* ───────────────────────── Подарунки ───────────────────────── */
+function answeredCount(){
+  return [state.type !== null, state.areaDone, state.level !== null, state.design !== null]
+         .filter(Boolean).length;
+}
+
+function buildGifts(){
+  $('#giftTrack').innerHTML = CONFIG.gifts.map((g,i) =>
+    '<div class="gift'+(g.hero?' hero':'')+'" data-g="'+i+'">'+
+      '<div class="gift-ico">'+(ICON[g.icon]||ICON.gift)+'</div>'+
+      '<div class="gift-label">'+esc(g.label)+'</div>'+
+      '<div class="gift-note">'+esc(g.note)+'</div>'+
+    '</div>').join('');
+}
+
+function paintGifts(){
+  const n   = answeredCount();
+  const pct = Math.round(n / STEPS_Q * 100);
+
+  $('#barFill').style.width = pct + '%';
+  $('#bar').setAttribute('aria-valuenow', pct);
+  countTo($('#pctNum'), pct, 700);
+
+  $$('.gift').forEach((el, i) => {
+    const on = i < n;
+    const was = el.classList.contains('on');
+    el.classList.toggle('on', on);
+    if (on && !was && !reduce){
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+      setTimeout(() => el.classList.remove('pop'), 1000);
+    }
+  });
+}
+
+/* ───────────────────────── Анімація чисел ───────────────────────── */
+function countTo(el, target, dur){
+  /* Скасовуємо попередню анімацію цього ж елемента, інакше два rAF-цикли
+     перезаписують одне одного і число «смикається». */
+  if (el._raf)   cancelAnimationFrame(el._raf);
+  if (el._guard) clearTimeout(el._guard);
+  el._raf = el._guard = null;
+
+  const done = () => {
+    if (el._raf)   cancelAnimationFrame(el._raf);   // інакше наступний кадр
+    if (el._guard) clearTimeout(el._guard);          // перезапише фінальне число
+    el._raf = el._guard = null;
+    el.textContent = group(target);
+  };
+
+  /* У фоновій вкладці rAF заморожений — анімація не потрібна й НЕБЕЗПЕЧНА:
+     без цього користувач побачив би «$0 — $0» замість ціни. */
+  if (reduce || document.hidden){ done(); return; }
+
+  const from = parseInt(String(el.textContent).replace(/\D/g,''), 10) || 0;
+  if (from === target){ done(); return; }
+
+  const t0 = performance.now();
+  /* Страховка: якщо кадри так і не прийдуть — проставляємо фінальне значення. */
+  el._guard = setTimeout(done, dur + 250);
+
+  const tick = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - p, 4);                     // easeOutQuart
+    el.textContent = group(Math.round(from + (target - from) * e));
+    if (p < 1) el._raf = requestAnimationFrame(tick);
+    else done();
+  };
+  el._raf = requestAnimationFrame(tick);
+}
+
+/* ───────────────────────── Рендер опцій ───────────────────────── */
+function optCard(o, extra){
+  return '<button type="button" class="opt'+(o.badge?' has-badge':'')+'" data-id="'+o.id+'" style="animation-delay:'+(extra.i*70)+'ms">'+
+    (o.badge ? '<span class="badge">'+esc(o.badge)+'</span>' : '') +
+    '<span class="tick">'+ICON.check+'</span>'+
+    '<span class="opt-top">'+
+      (o.icon ? '<span class="opt-ico">'+(ICON[o.icon]||'')+'</span>' : '')+
+      '<span class="opt-name">'+esc(o.name)+'</span>'+
+    '</span>'+
+    '<span class="opt-note">'+esc(o.note)+'</span>'+
+    (o.list ? '<ul class="opt-list">'+o.list.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>' : '')+
+    (extra.price ? '<span class="opt-price">'+extra.price+'</span>' : '')+
+  '</button>';
+}
+
+function renderOptions(){
+  $('#opts0').innerHTML = CONFIG.objectTypes.map((o,i) => optCard(o,{i})).join('');
+
+  $('#opts2').innerHTML = CONFIG.levels.map((o,i) => {
+    const lo = CONFIG.baseWorks.min*o.kWorks + o.finish[0];
+    const hi = CONFIG.baseWorks.max*o.kWorks + o.finish[1];
+    return optCard(o, { i, price: Math.round(lo)+'–'+Math.round(hi)+' $/м² ремонту' });
+  }).join('');
+
+  $('#opts3').innerHTML = CONFIG.designOptions.map((o,i) => {
+    let price = '';
+    if (o.project || o.supervision){
+      const usd = servicesUah(state.area, o) / CONFIG.uahPerUsd;
+      price = '+ ' + money(round100(usd)) + ' до бюджету';
+    }
+    return optCard(o, { i, price });
+  }).join('');
+}
+
+/* ───────────────────────── Навігація ───────────────────────── */
+function injectNav(){
+  /* Крок 0 — лише індикатор; кроки 2 і 3 — «Назад» + індикатор.
+     Крок 1 (площа) має власну розмітку з кнопкою «Далі». */
+  [[0,true],[2,true],[3,true]].forEach(function(cfg){
+    const sec = $('.step[data-step="'+cfg[0]+'"]');
+    const nav = document.createElement('div');
+    nav.className = 'nav';
+    nav.style.justifyContent = cfg[1] ? 'space-between' : 'center';
+    nav.innerHTML = (cfg[1] ? '<button class="btn btn-ghost" data-back>'+ICON.arrowL+' Назад</button>' : '')
+                  + '<div class="dots"></div>'
+                  + (cfg[1] ? '<span style="width:106px" aria-hidden="true"></span>' : '');
+    sec.appendChild(nav);
+  });
+}
+
+function renderDots(){
+  const html = Array.from({length: STEPS_Q}, (_, i) =>
+    '<span class="dot'+(i < state.step ? ' done' : '')+(i === state.step ? ' now' : '')+'"></span>'
+  ).join('');
+  $$('.dots').forEach(d => { d.innerHTML = html; });
+}
+
+function go(next){
+  const cur = $('.step.live');
+  const to  = $('.step[data-step="'+next+'"]');
+  if (!to || cur === to) return;
+
+  const show = () => {
+    $$('.step').forEach(s => s.classList.remove('live','out'));
+    to.classList.add('live');
+    state.step = next;
+    document.body.classList.toggle('at-intro', next === INTRO);
+    if (next === INTRO) startDemo(); else stopDemo();
+    renderDots();
+    if (next === RESULT) paintResult();
+    const y = $('.shell').getBoundingClientRect().top + window.scrollY - 12;
+    window.scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' });
+  };
+
+  if (cur && !reduce){
+    cur.classList.add('out');
+    setTimeout(show, 240);
+  } else {
+    show();
+  }
+}
+
+/* ───────────────────────── Результат ───────────────────────── */
+function paintResult(){
+  const r = calc();
+
+  countTo($('#sumMin'), round100(r.total[0]), 1200);
+  countTo($('#sumMax'), round100(r.total[1]), 1400);
+  $('#resSum').setAttribute('aria-label',
+    'Орієнтовна вартість від ' + money(round100(r.total[0])) + ' до ' + money(round100(r.total[1])));
+
+  $('#ppmMin').textContent = group(Math.round(r.perM2[0]));
+  $('#ppmMax').textContent = group(Math.round(r.perM2[1]));
+  $('#resArea').textContent = r.area + ' м²';
+
+  $('#resChips').innerHTML = [
+    r.type.name,
+    r.area + ' м²',
+    'Рівень «' + r.level.name + '»',
+    r.design.name
+  ].map(x => '<span>'+esc(x)+'</span>').join('');
+
+  const rows = [
+    { k:'Роботи бригади + чорнові матеріали',
+      i:'стіни, стяжка, електрика, сантехніка, вентиляція',
+      v: money(round100(r.works[0])) + ' – ' + money(round100(r.works[1])) },
+    { k:'Чистове оздоблення',
+      i:'плитка, підлога, двері, фарба, світло, сантехфаянс',
+      v: money(round100(r.finish[0])) + ' – ' + money(round100(r.finish[1])) }
+  ];
+
+  if (r.srvUah > 0){
+    rows.push({
+      k: r.design.supervision ? 'Дизайн-проєкт + авторський нагляд' : 'Дизайн-проєкт',
+      i: group(Math.round(r.srvUah)) + ' ₴ за курсом ' + CONFIG.uahPerUsd + ' ₴/$',
+      v: money(round100(r.srvUsd))
+    });
+  }
+
+  rows.push({ k:'Разом', v: money(round100(r.total[0])) + ' – ' + money(round100(r.total[1])), total:true });
+
+  $('#breakdown').innerHTML = rows.map(x =>
+    '<div class="row'+(x.total?' total':'')+'">'+
+      '<div class="row-k">'+esc(x.k)+(x.i?'<i>'+esc(x.i)+'</i>':'')+'</div>'+
+      '<div class="row-v">'+x.v+'</div>'+
+    '</div>').join('');
+
+  $('#extrasNote').innerHTML =
+    '<b>Меблі, техніка, текстиль і декор у цю суму не входять.</b> За ринком це додатково від ' +
+    CONFIG.extrasFrom + ' $/м² — приблизно ' + money(round100(r.extras)) +
+    ' на вашу площу. Точні цифри залежать від ваших запитів і ми порахуємо їх на консультації.';
+
+  $('#unlockedList').innerHTML = CONFIG.gifts.map(g =>
+    '<div class="ul-row'+(g.hero?' hero':'')+'">'+
+      '<div class="ul-ico">'+(ICON[g.icon]||ICON.gift)+'</div>'+
+      '<div class="ul-txt">'+esc(g.label)+'<i>'+esc(g.note)+'</i></div>'+
+    '</div>').join('');
+}
+
+/* ───────────────────────── Інтро: жива демо-картка ─────────────────────────
+   Прокручує приклади з CONFIG.intro.demos, рахуючи їх ТІЄЮ САМОЮ формулою,
+   що й справжній калькулятор — тож цифри в hero завжди чесні.            */
+let demoTimer = null, demoIdx = 0;
+
+function renderDemo(){
+  const list = CONFIG.intro.demos;
+  if (!list || !list.length) return;
+  const d = list[demoIdx % list.length];
+  const r = calc({ area:d.area, type:d.type, level:d.level, design:d.design });
+  if (!r.type || !r.level || !r.design) return;              // захист від друкарської помилки в CONFIG
+
+  $('#dmIdx').textContent = 'приклад ' + (demoIdx % list.length + 1) + '/' + list.length;
+  $('#dmTitle').textContent = r.type.name + ', ' + r.area + ' м²';
+  $('#dmChips').innerHTML =
+      '<span class="hi">' + esc(r.level.name) + '</span>' +
+      '<span>' + esc(r.design.name) + '</span>';
+
+  countTo($('#dmMin'), round100(r.total[0]), 900);
+  countTo($('#dmMax'), round100(r.total[1]), 1050);
+
+  const rows = [
+    ['Роботи та чорнові',  money(round100(r.works[0]))  + ' – ' + money(round100(r.works[1]))],
+    ['Чистове оздоблення', money(round100(r.finish[0])) + ' – ' + money(round100(r.finish[1]))]
+  ];
+  rows.push(r.srvUah > 0
+    ? ['Дизайн-проєкт' + (r.design.supervision ? ' + нагляд' : ''), group(Math.round(r.srvUah)) + ' ₴']
+    : ['Дизайн-проєкт', 'вже є у клієнта']);
+
+  $('#dmRows').innerHTML = rows.map(x =>
+    '<div class="demo-row"><span class="k">'+esc(x[0])+'</span><span class="v">'+x[1]+'</span></div>').join('');
+
+  const hero = CONFIG.gifts[CONFIG.gifts.length - 1];
+  $('#dmGift').innerHTML = ICON.gift;
+  $('#dmFoot').innerHTML = ICON.gift + '<span>Подарунок: ' + esc(hero ? hero.label : 'дизайн-макет кімнати') + '</span>';
+
+  /* смуга подарунка заповнюється наново на кожному прикладі */
+  const bar = $('#dmBar'), gift = $('#dmGift');
+  bar.style.transition = 'none';
+  bar.style.width = '0';
+  void bar.offsetWidth;
+  bar.style.transition = '';
+  requestAnimationFrame(() => { bar.style.width = '100%'; });
+  gift.classList.remove('pop');
+  setTimeout(() => {
+    gift.classList.add('pop');
+    setTimeout(() => gift.classList.remove('pop'), 420);
+  }, reduce ? 0 : 1250);
+}
+
+function startDemo(){
+  stopDemo();
+  renderDemo();
+  if (reduce || CONFIG.intro.demos.length < 2) return;        // без руху — один приклад
+  demoTimer = setInterval(function(){
+    const body = $('#dmBody');
+    body.classList.add('swap');                               // плавна підміна
+    setTimeout(function(){
+      demoIdx++;
+      renderDemo();
+      body.classList.remove('swap');
+    }, 340);
+  }, CONFIG.intro.demoEveryMs);
+}
+
+function stopDemo(){
+  if (demoTimer) clearInterval(demoTimer);
+  demoTimer = null;
+}
+
+/* ───────────────────────── Телефон ───────────────────────── */
+function maskPhone(v){
+  let d = String(v).replace(/\D/g,'');
+  if (d.indexOf('380') === 0) d = d.slice(3);
+  else if (d.indexOf('0') === 0) d = d.slice(1);
+  d = d.slice(0,9);
+  let out = '+380';
+  if (d.length)   out += ' ' + d.slice(0,2);
+  if (d.length>2) out += ' ' + d.slice(2,5);
+  if (d.length>5) out += ' ' + d.slice(5,7);
+  if (d.length>7) out += ' ' + d.slice(7,9);
+  return out;
+}
+const phoneDigits = v => {
+  let d = String(v).replace(/\D/g,'');
+  if (d.indexOf('380') === 0) d = d.slice(3);
+  else if (d.indexOf('0') === 0) d = d.slice(1);
+  return d.slice(0,9);
+};
+
+/* ───────────────────────── Відправка ───────────────────────── */
+function buildMessage(lead){
+  const r = lead.calc;
+  const L = [];
+  L.push('🔥 <b>Нова заявка з калькулятора ремонту</b>');
+  L.push('');
+  L.push('👤 <b>Імʼя:</b> ' + esc(lead.name));
+  L.push('📞 <b>Телефон:</b> ' + esc(lead.phone));
+  L.push('');
+  L.push('🏠 <b>Тип обʼєкта:</b> ' + esc(r.type.name));
+  L.push('📐 <b>Площа:</b> ' + r.area + ' м²');
+  L.push('✨ <b>Рівень:</b> ' + esc(r.level.name));
+  L.push('📋 <b>Дизайн-проєкт:</b> ' + esc(r.design.name));
+  L.push('');
+  L.push('🔨 Роботи + чорнові: ' + money(round100(r.works[0])) + ' – ' + money(round100(r.works[1])));
+  L.push('🎨 Чистове оздоблення: ' + money(round100(r.finish[0])) + ' – ' + money(round100(r.finish[1])));
+  if (r.srvUah > 0) L.push('📐 Послуги студії: ' + money(round100(r.srvUsd)) + ' (' + group(Math.round(r.srvUah)) + ' ₴)');
+  L.push('');
+  L.push('💵 <b>РАЗОМ: ' + money(round100(r.total[0])) + ' – ' + money(round100(r.total[1])) + '</b>');
+  L.push('≈ ' + Math.round(r.perM2[0]) + '–' + Math.round(r.perM2[1]) + ' $/м²');
+  L.push('');
+  L.push('🕑 ' + lead.at);
+  if (lead.page) L.push('🔗 ' + esc(lead.page));
+  return L.join('\n');
+}
+
+async function sendLead(lead){
+  /* Варіант Б — вебхук (токен на сервері) */
+  if (CONFIG.webhookUrl){
+    const res = await fetch(CONFIG.webhookUrl, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        name: lead.name, phone: lead.phone, at: lead.at, page: lead.page,
+        objectType: lead.calc.type.name, area: lead.calc.area,
+        level: lead.calc.level.name, design: lead.calc.design.name,
+        totalMin: round100(lead.calc.total[0]), totalMax: round100(lead.calc.total[1]),
+        text: buildMessage(lead)
+      })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return;
+  }
+
+  /* Варіант А — Telegram */
+  const tk = CONFIG.telegram.botToken, ch = CONFIG.telegram.chatId;
+  const ready = tk && ch && tk.indexOf('PASTE') !== 0 && ch.indexOf('PASTE') !== 0;
+
+  if (!ready){
+    console.warn('[Калькулятор] Telegram не налаштований — заявка НЕ відправлена.\n' +
+      'Впишіть botToken і chatId у CONFIG.telegram (інструкція в README.md).');
+    console.log('[Калькулятор] Заявка (демо-режим):', lead);
+    await new Promise(r => setTimeout(r, 700));             // імітація запиту
+    return;
+  }
+
+  const res = await fetch('https://api.telegram.org/bot' + tk + '/sendMessage', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      chat_id: ch,
+      text: buildMessage(lead),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) throw new Error(data.description || ('HTTP ' + res.status));
+}
+
+/* ───────────────────────── Ripple ───────────────────────── */
+function ripple(btn, ev){
+  if (reduce) return;
+  const r = btn.getBoundingClientRect();
+  const size = Math.max(r.width, r.height) * 1.1;
+  const el = document.createElement('span');
+  el.className = 'ripple';
+  el.style.width = el.style.height = size + 'px';
+  el.style.left = ((ev.clientX || r.left + r.width/2) - r.left - size/2) + 'px';
+  el.style.top  = ((ev.clientY || r.top + r.height/2) - r.top  - size/2) + 'px';
+  btn.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+/* ───────────────────────── Площа ───────────────────────── */
+function paintArea(){
+  const a = state.area, mn = CONFIG.area.min, mx = CONFIG.area.max;
+  $('#areaNum').textContent = a;
+  $('#rngDone').style.width = ((a - mn) / (mx - mn) * 100) + '%';
+  $$('#areaChips .chip').forEach(c => c.classList.toggle('sel', +c.dataset.v === a));
+}
+
+/* ───────────────────────── Ініціалізація ───────────────────────── */
+function init(){
+  /* бренд */
+  $('#brandName').textContent = CONFIG.brand.name;
+  $('#brandSub').textContent  = CONFIG.brand.sub;
+  $('#brandPhoneTxt').textContent = CONFIG.brand.phone;
+  const telHref = 'tel:' + CONFIG.brand.phone.replace(/[^\d+]/g,'');
+  $('#brandPhone').href = telHref;
+  $('#doneCall').href   = telHref;
+  $('#policyLink').href = CONFIG.brand.policyUrl;
+
+  /* перший екран */
+  const I = CONFIG.intro;
+  $('#heroKicker').textContent = I.kicker;
+  $('#heroT1').textContent = I.title1;
+  $('#heroT2').textContent = I.title2;
+  $('#heroLead').innerHTML = I.lead;
+  $('#startTxt').textContent = I.cta;
+  $('#heroMeta').innerHTML = I.meta;
+  $('#heroFacts').innerHTML = I.facts.map(f =>
+    '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+f+'</span>').join('');
+  $('#startBtn').addEventListener('click', () => go(0));
+
+  buildGifts();
+  renderOptions();
+  injectNav();
+  renderDots();
+  paintGifts();
+
+  /* слайдер площі */
+  const rng = $('#areaRange');
+  rng.min = CONFIG.area.min; rng.max = CONFIG.area.max; rng.value = state.area;
+  $('.rng-ends').innerHTML = '<span>'+CONFIG.area.min+' м²</span><span>'+CONFIG.area.max+' м²</span>';
+  $('#areaChips').innerHTML = CONFIG.area.presets
+    .map(v => '<button type="button" class="chip" data-v="'+v+'">'+v+' м²</button>').join('');
+  paintArea();
+
+  rng.addEventListener('input', () => { state.area = +rng.value; paintArea(); });
+  $('#areaChips').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    state.area = +c.dataset.v; rng.value = state.area; paintArea();
+  });
+  $('#areaNext').addEventListener('click', () => {
+    state.areaDone = true;
+    renderOptions();                                       // ціни послуг залежать від площі
+    syncSelection();
+    paintGifts();
+    go(2);
+  });
+
+  /* вибір карток */
+  [[0,'type',1],[2,'level',3],[3,'design',RESULT]].forEach(function(cfg){
+    const box = $('#opts' + cfg[0]);
+    box.addEventListener('click', function(e){
+      const b = e.target.closest('.opt'); if (!b) return;
+      ripple(b, e);
+      state[cfg[1]] = b.dataset.id;
+      syncSelection();
+      paintGifts();
+      setTimeout(() => go(cfg[2]), reduce ? 0 : 400);
+    });
+  });
+
+  /* назад */
+  document.addEventListener('click', function(e){
+    const b = e.target.closest('[data-back]'); if (!b) return;
+    go(state.step === 0 ? INTRO : state.step - 1);
+  });
+
+  /* телефон */
+  const ph = $('#inPhone');
+  ph.addEventListener('focus', () => { if (!ph.value) ph.value = '+380 '; });
+  ph.addEventListener('input', () => { ph.value = maskPhone(ph.value); });
+  ph.addEventListener('blur',  () => { if (phoneDigits(ph.value).length === 0) ph.value = ''; });
+
+  /* зняття підсвітки помилки при правці */
+  [['#inName','#fName'],['#inPhone','#fPhone']].forEach(function(p){
+    $(p[0]).addEventListener('input', () => $(p[1]).classList.remove('bad'));
+  });
+  $('#inConsent').addEventListener('change', () => $('#fConsent').classList.remove('bad'));
+
+  /* форма */
+  $('#leadForm').addEventListener('submit', onSubmit);
+
+  /* почати спочатку */
+  $('#restartBtn').addEventListener('click', function(){
+    state.type = null; state.level = null; state.design = null;
+    state.area = CONFIG.area.def; state.areaDone = false;
+    rng.value = state.area; paintArea();
+    renderOptions(); syncSelection(); paintGifts();
+    $('#leadForm').reset();
+    $('#sendErr').classList.remove('on');
+    go(INTRO);
+  });
+
+  go(INTRO);
+}
+
+function syncSelection(){
+  const map = { 0:state.type, 2:state.level, 3:state.design };
+  Object.keys(map).forEach(function(k){
+    $$('#opts'+k+' .opt').forEach(b => b.classList.toggle('sel', b.dataset.id === map[k]));
+  });
+}
+
+async function onSubmit(e){
+  e.preventDefault();
+
+  const name = $('#inName').value.trim();
+  const dig  = phoneDigits($('#inPhone').value);
+  const ok   = $('#inConsent').checked;
+
+  let bad = false;
+  $('#fName').classList.toggle('bad', name.length < 2);   if (name.length < 2) bad = true;
+  $('#fPhone').classList.toggle('bad', dig.length !== 9); if (dig.length !== 9) bad = true;
+  $('#fConsent').classList.toggle('bad', !ok);            if (!ok) bad = true;
+  if (bad){
+    const first = $('.field.bad input') || $('#inConsent');
+    if (first && first.focus) first.focus();
+    return;
+  }
+
+  const btn = $('#submitBtn'), txt = $('#submitTxt'), arrow = $('#submitArrow');
+  btn.disabled = true;
+  txt.textContent = 'Відправляємо…';
+  arrow.outerHTML = '<span class="spin" id="submitArrow"></span>';
+  $('#sendErr').classList.remove('on');
+
+  const lead = {
+    name: name,
+    phone: '+380' + dig,
+    at: new Date().toLocaleString('uk-UA', { dateStyle:'short', timeStyle:'short' }),
+    page: location.href.split('#')[0],
+    calc: calc()
+  };
+
+  try {
+    await sendLead(lead);
+    $('#doneName').textContent  = name;
+    $('#donePhone').textContent = maskPhone(lead.phone);
+    $('#doneList').innerHTML = CONFIG.gifts.map(g =>
+      '<div class="ul-row'+(g.hero?' hero':'')+'">'+
+        '<div class="ul-ico">'+(ICON[g.icon]||ICON.gift)+'</div>'+
+        '<div class="ul-txt">'+esc(g.label)+'<i>'+esc(g.note)+'</i></div>'+
+      '</div>').join('');
+    go(SUCCESS);
+  } catch (err){
+    console.error('[Калькулятор] Не вдалося відправити заявку:', err);
+    $('#sendErr').innerHTML = 'Не вдалося відправити заявку. Зателефонуйте нам, будь ласка: ' +
+      '<a href="'+$('#brandPhone').href+'">'+esc(CONFIG.brand.phone)+'</a>';
+    $('#sendErr').classList.add('on');
+  } finally {
+    btn.disabled = false;
+    txt.textContent = 'Отримати точний розрахунок';
+    const sp = $('#submitArrow');
+    if (sp) sp.outerHTML = '<svg id="submitArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+  }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+})();
+</script>
+</body>
+</html>
